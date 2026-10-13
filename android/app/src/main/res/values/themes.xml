@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.SMM2Injector" parent="android:Theme.Material.NoActionBar" />
+</resources>

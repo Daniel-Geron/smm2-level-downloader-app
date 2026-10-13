@@ -1,0 +1,6 @@
+# Game dumps, console keys and firmware must never be committed
+*.nsp
+*.xci
+*.nca
+*.keys
+Firmware*.zip

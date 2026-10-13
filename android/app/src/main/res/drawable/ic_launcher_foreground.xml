@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "?" block with a download arrow, drawn inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FBD000"
+        android:strokeColor="#7A4A00"
+        android:strokeWidth="3"
+        android:pathData="M32,22 h44 a4,4 0 0 1 4,4 v36 a4,4 0 0 1 -4,4 h-44 a4,4 0 0 1 -4,-4 v-36 a4,4 0 0 1 4,-4 z" />
+    <path
+        android:fillColor="#7A4A00"
+        android:pathData="M46,36 a8,8 0 1 1 11,7.4 c-1.8,0.8 -2.5,1.8 -2.5,3.6 v2 h-5 v-2.5 c0,-3.5 1.6,-5.4 4.4,-6.8 a3,3 0 1 0 -2.9,-3.7 z M49.5,52 h5 v5 h-5 z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M49,69 h10 v6 h6 l-11,10 l-11,-10 h6 z" />
+</vector>
