@@ -60,7 +60,7 @@ The `android/` folder contains an Android app that does everything on your phone
 ![Android App](<GUI Images/Android App.png>)
 
 ## Setup
-1) Download `app-release.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
+1) Download `smm2_level_downloader_injector_1.0.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
 2) In Eden, start Super Mario Maker 2 once so the game creates its save, then close Eden completely (swipe it away from recent apps)
 3) Open **SMM2 Level Injector** and tap **Select Eden folder**. The file picker opens on Eden's files; tap **Use this folder**, then **Allow**. If it doesn't open there, tap the ☰ menu in the picker and choose **Eden**
 4) The app finds your Super Mario Maker 2 save automatically
