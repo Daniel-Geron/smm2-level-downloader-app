@@ -1,4 +1,4 @@
-## DISCLAIMER: This app is dependent on the [MariOver](https://github.com/TheGreatRambler/MariOver) server. If the server is down or having issues, the app will not be able to get levels!
+## DISCLAIMER: Downloading levels by code depends on the [MariOver](https://github.com/TheGreatRambler/MariOver) server. If the server is down or having issues, you can only use levels saved on your device and levels from the [level archive](#level-archive) (uploaded up to February 2022).
 # SMM2 Level Injector for Eden (Android)
 
 An Android app that downloads any Super Mario Maker 2 level by its course code and puts it into your Coursebot in the [Eden](https://eden-emu.dev) Switch emulator. Levels placed in "My Courses" can be opened in the editor. Everything happens on your phone; no PC is needed.
