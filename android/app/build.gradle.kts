@@ -12,11 +12,20 @@ android {
         applicationId = "io.github.daniel_geron.smm2injector"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
+
+        // Release builds always use the public MariOver server. Debug builds can be pointed at a
+        // test server with -PapiBaseUrl=http://10.0.2.2:8000/mm2
+        buildConfigField("String", "API_BASE_URL", "\"https://tgrcode.com/mm2\"")
     }
 
     buildTypes {
+        debug {
+            (project.findProperty("apiBaseUrl") as String?)?.let {
+                buildConfigField("String", "API_BASE_URL", "\"$it\"")
+            }
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -35,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -49,4 +59,13 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
+}
+
+// Archive tests use real files from the dataset; pass -PtestDataDir=... to run them.
+tasks.withType<Test>().configureEach {
+    systemProperty("testDataDir", project.findProperty("testDataDir") ?: "")
+    testLogging { showStandardStreams = true; events("passed", "failed", "skipped") }
 }

@@ -3,12 +3,14 @@
 
 An Android app that downloads any Super Mario Maker 2 level by its course code and puts it into your Coursebot in the [Eden](https://eden-emu.dev) Switch emulator. Levels placed in "My Courses" can be opened in the editor. Everything happens on your phone; no PC is needed.
 
+You can also browse an archive of 26.6 million levels (everything uploaded up to February 2022) with search and filters, and inject them without a code or the level server.
+
 **[Download the latest APK](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest)**
 
 ![Android App](<GUI Images/Android App.png>)
 
 # Setup
-1) Download `smm2_level_downloader_injector_1.0.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
+1) Download `smm2_level_downloader_injector_1.1.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
 2) In Eden, start Super Mario Maker 2 once so the game creates its save, then close Eden completely (swipe it away from recent apps)
 3) Open **SMM2 Level Injector** and tap **Select Eden folder**. The file picker opens on Eden's files; tap **Use this folder**, then **Allow**. If it doesn't open there, tap the ☰ menu in the picker and choose **Eden**
 4) The app finds your Super Mario Maker 2 save automatically
@@ -21,6 +23,24 @@ An Android app that downloads any Super Mario Maker 2 level by its course code a
 
 The file being replaced is backed up first, and you can restore it from the **Backups** section.
 
+The status line at the top shows whether the level server is online, busy or down, so you know before entering a code.
+
+**Saving levels on your device (optional):** turn on **Save downloaded levels on this device** and every level you preview or inject is kept on your phone. If the server is down later, you can still preview and inject those levels. Saved levels are listed with **Use** and **Delete** buttons. It's off by default.
+
+If the server is down and the level isn't saved on your device, the app tries the level archive (below) instead, as long as the level was uploaded before February 2022.
+
+# Level archive
+![Level archive](<GUI Images/Level Archive.png>)
+
+Tap **Browse the level archive** to scroll through levels without needing a code. It uses TheGreatRambler's [mm2_level dataset](https://huggingface.co/datasets/TheGreatRambler/mm2_level), a snapshot of all 26.6 million levels uploaded to Course World up to February 2022. Levels uploaded after that aren't in it.
+
+1) **Build the level index** (needed to browse). This downloads about 2 GB of level details (names, styles, tags, likes, clear rates…) and needs about 4 GB of space. It runs in the background with a notification, and you can stop it and continue later. You can browse the levels indexed so far while it runs
+2) Search by name, sort (most liked, most played, newest…) and filter by style, theme, difficulty, tag and clear rate
+3) Tap a level to see its details and description, then **Inject…** it into a slot. The level itself is fetched from the archive when you inject it, a few KB per level
+4) **Optional:** **Download full archive** (85 GB) so levels can be injected with no internet at all. You can choose internal storage or an SD card
+
+The archive has no thumbnails or maker names. The level server isn't involved at any point, so the archive keeps working while the server is down.
+
 # Empty slots / pre-loaded save
 Super Mario Maker 2 ignores injected levels in slots that are empty in your save, so you can only replace slots that already have a course in them. The app warns you if you pick an empty slot.
 
@@ -31,8 +51,12 @@ Only the **level data** is replaced, not the **level metadata**. As a result:
 * The thumbnail in Coursebot is still the one from the course that used to be in that slot
 * Level statistics and the maker are not carried over from the downloaded level
 
+Downloading by code depends on the MariOver server, which sometimes goes down. Levels saved on your device and levels in the archive still work when it's down.
+
 # How it works
 Levels are downloaded through TheGreatRambler's [MariOver API](https://github.com/TheGreatRambler/MariOver).
+
+The archive stores levels decrypted, so the app re-encrypts each one into a course file the game accepts, using the same format and keys as the game. The archive files are Parquet files on Hugging Face. The app reads them with HTTP range requests, so it only downloads the parts it needs.
 
 Android doesn't let apps read other apps' private folders directly, but Eden exposes its files through Android's file picker (the "Eden" entry). The app asks for access to that folder once, then looks for the Super Mario Maker 2 save, which Eden keeps in one of these places:
 * `nand/user/save/0000000000000000/<user id>/01009B90006DC000/`
@@ -73,5 +97,6 @@ To use the pre-loaded save on PC, copy the files from `Pre-loaded Save/Emulator`
 
 # Credits
 * [royaltongue](https://github.com/royaltongue) - The original downloader/injector and the pre-loaded save. This repository is a fork of [royaltongue/smm2-level-downloader-injector](https://github.com/royaltongue/smm2-level-downloader-injector)
-* [TheGreatRambler](https://github.com/TheGreatRambler) - The [MariOver API](https://github.com/TheGreatRambler/MariOver), which makes all of this possible
+* [TheGreatRambler](https://github.com/TheGreatRambler) - The [MariOver API](https://github.com/TheGreatRambler/MariOver), which makes all of this possible, and the [mm2_level dataset](https://huggingface.co/datasets/TheGreatRambler/mm2_level) (CC BY-NC-SA 4.0) behind the level archive. The course-file encryption is based on MariOver's (MIT License, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md))
+* [Kinnay](https://github.com/kinnay) - [NintendoClients wiki](https://github.com/kinnay/NintendoClients/wiki/Data-Store-Codes#super-mario-maker-2), for converting between course codes and the archive's data IDs
 * [DarkFlare](https://www.youtube.com/@DarkFlare) - The Ryujinx cheat that removes background music, from the description of [this video](https://www.youtube.com/watch?v=vQd758VzOug)

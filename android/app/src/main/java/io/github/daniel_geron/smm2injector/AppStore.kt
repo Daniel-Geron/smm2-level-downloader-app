@@ -40,6 +40,11 @@ class AppStore(private val context: Context) {
             putString("save_profile", value?.profile)
         }
 
+    /** Whether downloaded levels are kept on the device (off by default). */
+    var saveLevels: Boolean
+        get() = prefs.getBoolean("save_levels", false)
+        set(value) = prefs.edit { putBoolean("save_levels", value) }
+
     // ---------------------------------------------------------------- history
 
     fun loadHistory(): Map<Int, HistoryEntry> {

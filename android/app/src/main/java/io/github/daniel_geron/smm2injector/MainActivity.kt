@@ -14,6 +14,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -45,6 +47,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -54,6 +57,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,10 +66,14 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import java.text.DateFormat
@@ -99,10 +107,12 @@ fun MainScreen(vm: MainViewModel) {
         if (uri != null) vm.onTreePicked(uri)
     }
     var showSlotPicker by remember { mutableStateOf(false) }
+    var showArchive by rememberSaveable { mutableStateOf(false) }
+    val archiveVm: ArchiveViewModel = viewModel()
     val busy = vm.busyMessage != null
 
     Box(Modifier.fillMaxSize()) {
-        Scaffold(topBar = { TopAppBar(title = { Text("SMM2 Level Injector") }) }) { padding ->
+        if (showArchive) ArchiveScreen(archiveVm, vm, onBack = { showArchive = false }) else Scaffold(topBar = { TopAppBar(title = { Text("SMM2 Level Injector") }) }) { padding ->
             Column(
                 Modifier
                     .fillMaxSize()
@@ -112,6 +122,11 @@ fun MainScreen(vm: MainViewModel) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
+                ServerStatusRow(vm)
+                OutlinedButton(onClick = { showArchive = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Browse the level archive (26.6M levels, no code needed)")
+                }
+
                 // ---------------------------------------------------------- step 1
                 StepCard("1. Eden save folder") {
                     val location = vm.saveLocation
@@ -149,8 +164,10 @@ fun MainScreen(vm: MainViewModel) {
                 StepCard("2. Level code") {
                     OutlinedTextField(
                         value = vm.codeInput,
-                        onValueChange = { vm.codeInput = it },
+                        // Only letters/numbers are kept; the dashes are drawn by CodeDashes.
+                        onValueChange = { vm.codeInput = MariOverApi.normalizeCode(it).take(9) },
                         label = { Text("Level code (e.g. ABC-DEF-GHI)") },
+                        visualTransformation = CodeDashes,
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Characters,
@@ -236,6 +253,8 @@ fun MainScreen(vm: MainViewModel) {
                     ) { Text("Install pre-loaded save (~135 MB)") }
                 }
 
+                SavedLevelsCard(vm, busy)
+
                 if (vm.backups.isNotEmpty()) {
                     StepCard("Backups") {
                         Text(
@@ -313,6 +332,14 @@ private fun LevelPreview(info: MariOverApi.LevelInfo, vm: MainViewModel) {
                         .aspectRatio(16f / 9f),
                 )
             }
+            when (vm.previewSource) {
+                PreviewSource.DEVICE -> "The server is down, so this is the copy saved on your device."
+                PreviewSource.ARCHIVE -> "The server is down, so this comes from the 2022 level archive " +
+                    "(no thumbnail or maker info)."
+                PreviewSource.SERVER -> null
+            }?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
             Text(info.name, style = MaterialTheme.typography.titleMedium)
             Text("by ${info.maker}", style = MaterialTheme.typography.bodyMedium)
             Text(
@@ -342,7 +369,7 @@ private fun SlotStatus(vm: MainViewModel) {
     Text("Slot $slot: $kind", fontWeight = FontWeight.Medium)
     vm.history[slot]?.let {
         Text(
-            "Last injected here: ${it.name} (${it.code}) on ${formatTime(it.time)}",
+            "Last injected here: ${it.name} (${MariOverApi.formatCode(it.code)}) on ${formatTime(it.time)}",
             style = MaterialTheme.typography.bodySmall,
         )
     }
@@ -357,7 +384,7 @@ private fun SlotStatus(vm: MainViewModel) {
 }
 
 @Composable
-private fun SlotPickerDialog(vm: MainViewModel, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
+internal fun SlotPickerDialog(vm: MainViewModel, onPick: (Int) -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
@@ -400,6 +427,109 @@ private fun SlotPickerDialog(vm: MainViewModel, onPick: (Int) -> Unit, onDismiss
 }
 
 private val SmallPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp, vertical = 4.dp)
+
+@Composable
+private fun ServerStatusRow(vm: MainViewModel) {
+    val (color, text) = when (vm.serverStatus) {
+        null -> MaterialTheme.colorScheme.outline to "Checking level server…"
+        MariOverApi.ServerStatus.ONLINE -> Color(0xFF2E7D32) to "Level server is online"
+        MariOverApi.ServerStatus.BUSY -> Color(0xFFF9A825) to "Level server is busy, try again in a minute"
+        MariOverApi.ServerStatus.DOWN -> MaterialTheme.colorScheme.error to
+            "Level server is down. Only levels saved on this device can be used"
+    }
+    OutlinedCard(Modifier.fillMaxWidth()) {
+        Row(Modifier.padding(start = 16.dp, end = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(12.dp)
+                    .background(color, CircleShape)
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(vertical = 8.dp)
+            ) {
+                Text(text, style = MaterialTheme.typography.bodyMedium)
+                if (vm.serverStatus != null) {
+                    Text(
+                        "Checked ${formatClock(vm.serverCheckedAt)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            TextButton(enabled = vm.serverStatus != null, onClick = vm::checkServer) { Text("Check") }
+        }
+    }
+}
+
+@Composable
+private fun SavedLevelsCard(vm: MainViewModel, busy: Boolean) {
+    StepCard("Saved levels") {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "Save downloaded levels on this device",
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Switch(checked = vm.saveLevels, onCheckedChange = vm::updateSaveLevels)
+        }
+        Text(
+            "When on, every level you preview or inject is kept on your device, so you can use it again " +
+                "even when the level server is down. Saved levels are always used when available.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        vm.savedLevels.forEach { level ->
+            OutlinedCard(Modifier.fillMaxWidth()) {
+                Row(Modifier.padding(start = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clickable(enabled = !busy) { vm.useSavedLevel(level.code) }
+                            .padding(vertical = 8.dp)
+                    ) {
+                        Text(level.info?.name ?: "Unknown level", fontWeight = FontWeight.Medium)
+                        Text(
+                            MariOverApi.formatCode(level.code) +
+                                (level.info?.let { " · by ${it.maker}" } ?: "") +
+                                (if (level.hasData) "" else " · info only"),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    TextButton(enabled = !busy, onClick = { vm.useSavedLevel(level.code) }) { Text("Use") }
+                    TextButton(enabled = !busy, onClick = { vm.deleteSavedLevel(level.code) }) { Text("Delete") }
+                }
+            }
+        }
+        if (vm.savedLevels.size > 1) {
+            TextButton(enabled = !busy, onClick = { vm.dialog = DialogState.ConfirmDeleteSavedLevels }) {
+                Text("Delete all saved levels")
+            }
+        }
+    }
+}
+
+/** Shows the 9-character code as ABC-DEF-GHI while the field itself only holds the characters. */
+private object CodeDashes : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val raw = text.text
+        val shown = buildString {
+            raw.forEachIndexed { i, c ->
+                append(c)
+                if (i == 2 || i == 5) append('-')
+            }
+        }
+        val mapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int): Int =
+                offset + (if (offset >= 3) 1 else 0) + (if (offset >= 6) 1 else 0)
+
+            override fun transformedToOriginal(offset: Int): Int =
+                (offset - (if (offset >= 4) 1 else 0) - (if (offset >= 8) 1 else 0)).coerceIn(0, raw.length)
+        }
+        return TransformedText(AnnotatedString(shown), mapping)
+    }
+}
 
 @Composable
 private fun BusyOverlay(message: String) {
@@ -496,6 +626,14 @@ private fun Dialogs(state: DialogState, vm: MainViewModel) {
             dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } },
         )
 
+        DialogState.ConfirmDeleteSavedLevels -> AlertDialog(
+            onDismissRequest = dismiss,
+            title = { Text("Delete all saved levels?") },
+            text = { Text("All ${vm.savedLevels.size} levels saved on this device will be deleted.") },
+            confirmButton = { TextButton(onClick = vm::deleteAllSavedLevels) { Text("Delete all") } },
+            dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } },
+        )
+
         is DialogState.ChooseSave -> AlertDialog(
             onDismissRequest = dismiss,
             title = { Text("Which save?") },
@@ -524,6 +662,9 @@ private fun Dialogs(state: DialogState, vm: MainViewModel) {
 
 private fun formatTime(millis: Long): String =
     DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(millis))
+
+private fun formatClock(millis: Long): String =
+    DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(millis))
 
 /** Folder picker that opens directly on Eden's files when Eden is installed. */
 private class OpenEdenFolder : ActivityResultContracts.OpenDocumentTree() {

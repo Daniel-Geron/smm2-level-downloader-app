@@ -11,7 +11,14 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.daniel_geron.smm2injector.archive.ArchiveLevel
+import io.github.daniel_geron.smm2injector.archive.CourseCode
+import io.github.daniel_geron.smm2injector.archive.LevelArchive
+import io.github.daniel_geron.smm2injector.archive.LevelNames
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,6 +28,9 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
+/** Where the level preview came from. */
+enum class PreviewSource { SERVER, DEVICE, ARCHIVE }
+
 sealed interface DialogState {
     data class Error(val message: String) : DialogState
     data class Success(val message: String) : DialogState
@@ -28,10 +38,13 @@ sealed interface DialogState {
     data object ConfirmPreloaded : DialogState
     data class ConfirmRestore(val backup: Backup) : DialogState
     data class ChooseSave(val candidates: List<SaveLocation>) : DialogState
+    data object ConfirmDeleteSavedLevels : DialogState
 }
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val store = AppStore(app)
+    private val cache = LevelCache(app)
+    private val archive = LevelArchive.get(app)
     private val resolver = app.contentResolver
 
     var treeUri by mutableStateOf<Uri?>(null)
@@ -49,6 +62,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         private set
     var thumbnail by mutableStateOf<ImageBitmap?>(null)
         private set
+    var previewSource by mutableStateOf(PreviewSource.SERVER)
+        private set
+
+    /** Null while checking. */
+    var serverStatus by mutableStateOf<MariOverApi.ServerStatus?>(null)
+        private set
+    var serverCheckedAt by mutableStateOf(0L)
+        private set
+
+    var saveLevels by mutableStateOf(store.saveLevels)
+        private set
+    var savedLevels by mutableStateOf(cache.list())
+        private set
 
     var history by mutableStateOf(store.loadHistory())
         private set
@@ -65,6 +91,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         get() = treeUri?.let(::edenPackageForTree) ?: findInstalledEden(getApplication())
 
     init {
+        checkServer()
         val savedTree = store.treeUri
         val stillGranted = savedTree != null &&
             resolver.persistedUriPermissions.any { it.uri == savedTree && it.isWritePermission }
@@ -148,17 +175,129 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         levelInfo = null
         thumbnail = null
-        runTask("Looking up $code…") {
-            levelInfo = MariOverApi.fetchLevelInfo(code)
-            thumbnail = MariOverApi.fetchThumbnail(code)
-                ?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-                ?.asImageBitmap()
+        previewSource = PreviewSource.SERVER
+        runTask("Looking up ${MariOverApi.formatCode(code)}…") {
+            previewSource = try {
+                val json = MariOverApi.fetchLevelInfoJson(code)
+                recordServerStatus(MariOverApi.ServerStatus.ONLINE)
+                levelInfo = MariOverApi.parseLevelInfo(code, json)
+                val thumb = MariOverApi.fetchThumbnail(code)
+                if (saveLevels) {
+                    cache.saveInfo(code, json)
+                    thumb?.let { cache.saveThumbnail(code, it) }
+                    // Grab the level itself too, so it can be injected later even if the server goes down.
+                    if (cache.data(code) == null) {
+                        busyMessage = "Saving ${MariOverApi.formatCode(code)} on this device…"
+                        runCatching { cache.saveData(code, MariOverApi.fetchLevelData(code)) }
+                    }
+                    savedLevels = cache.list()
+                }
+                showThumbnail(thumb ?: cache.thumbnail(code))
+                PreviewSource.SERVER
+            } catch (e: MariOverApi.ServerDownException) {
+                recordServerStatus(e.status)
+                val json = cache.infoJson(code)
+                if (json != null) {
+                    levelInfo = MariOverApi.parseLevelInfo(code, json)
+                    showThumbnail(cache.thumbnail(code))
+                    PreviewSource.DEVICE
+                } else {
+                    busyMessage = "Server is down, checking the 2022 level archive…"
+                    val level = archiveLookup(code) ?: throw notSavedError(e)
+                    levelInfo = MariOverApi.parseLevelInfo(code, archiveInfoJson(level))
+                    PreviewSource.ARCHIVE
+                }
+            }
         }
+    }
+
+    private fun showThumbnail(jpg: ByteArray?) {
+        thumbnail = jpg?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }?.asImageBitmap()
+    }
+
+    private fun notSavedError(e: MariOverApi.ServerDownException) = MariOverApi.ServerDownException(
+        e.message + "\n\nThis level isn't saved on your device or in the 2022 level archive, so it can't be " +
+            "used until the server is back.",
+        e.status,
+    )
+
+    private fun archiveLookup(code: String): ArchiveLevel? {
+        val id = CourseCode.toDataId(code) ?: return null
+        if (!archive.mightContain(id)) return null
+        return runCatching { archive.lookup(id) }.getOrNull()
+    }
+
+    private fun archiveCourse(code: String): ByteArray? {
+        val id = CourseCode.toDataId(code) ?: return null
+        if (!archive.mightContain(id)) return null
+        return archive.courseFile(id)
+    }
+
+    /** The archive level in the same JSON shape as MariOver's level_info, so it can be saved and shown alike. */
+    private fun archiveInfoJson(level: ArchiveLevel): String = JSONObject()
+        .put("name", level.name)
+        .put("description", runCatching { archive.description(level.dataId) }.getOrNull().orEmpty())
+        .put("game_style_name", LevelNames.style(level.style))
+        .put("theme_name", LevelNames.theme(level.theme))
+        .put("difficulty_name", LevelNames.difficulty(level.difficulty))
+        .put("uploader", JSONObject().put("name", "unknown (from the 2022 archive)"))
+        .put("clear_rate_pretty", "%.2f%%".format(level.clearRate))
+        .put("likes", level.likes)
+        .put("plays", level.plays)
+        .put("tags_name", JSONArray(listOf(LevelNames.tag(level.tag1), LevelNames.tag(level.tag2))))
+        .toString()
+
+    // ---------------------------------------------------------------- server status
+
+    fun checkServer() {
+        serverStatus = null
+        viewModelScope.launch {
+            recordServerStatus(withContext(Dispatchers.IO) { MariOverApi.checkStatus() })
+        }
+    }
+
+    private fun recordServerStatus(status: MariOverApi.ServerStatus) {
+        serverStatus = status
+        serverCheckedAt = System.currentTimeMillis()
+    }
+
+    // ---------------------------------------------------------------- saved levels
+
+    fun updateSaveLevels(enabled: Boolean) {
+        saveLevels = enabled
+        store.saveLevels = enabled
+    }
+
+    fun useSavedLevel(code: String) {
+        codeInput = code
+        lookUpLevel()
+    }
+
+    fun deleteSavedLevel(code: String) {
+        cache.delete(code)
+        savedLevels = cache.list()
+    }
+
+    fun deleteAllSavedLevels() {
+        dialog = null
+        cache.deleteAll()
+        savedLevels = cache.list()
     }
 
     // ---------------------------------------------------------------- inject
 
     fun parsedSlot(): Int? = slotInput.trim().toIntOrNull()?.takeIf { it in 0 until TOTAL_SLOTS }
+
+    /** Set when injecting from the archive browser, so the archive is used instead of MariOver. */
+    private var pendingArchiveLevel: ArchiveLevel? = null
+
+    fun injectFromArchive(level: ArchiveLevel, slot: Int) {
+        codeInput = level.code
+        slotInput = slot.toString()
+        levelInfo = null
+        pendingArchiveLevel = level
+        inject()
+    }
 
     fun inject(confirmedEmptySlot: Boolean = false) {
         dialog = null
@@ -181,10 +320,39 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
 
-        runTask("Downloading $code…") {
-            val data = MariOverApi.fetchLevelData(code)
+        runTask("Downloading ${MariOverApi.formatCode(code)}…") {
+            val fromArchive = pendingArchiveLevel?.takeIf { it.code == code }
+            pendingArchiveLevel = null
+            // A saved copy is identical to the server's (levels can't change after upload), so use it first.
+            val data = cache.data(code)
+                ?: fromArchive?.let {
+                    busyMessage = "Getting ${MariOverApi.formatCode(code)} from the level archive…"
+                    archive.courseFile(it.dataId) ?: throw IOException("This level isn't in the archive.")
+                }
+                ?: try {
+                    MariOverApi.fetchLevelData(code).also { recordServerStatus(MariOverApi.ServerStatus.ONLINE) }
+                } catch (e: MariOverApi.ServerDownException) {
+                    recordServerStatus(e.status)
+                    busyMessage = "Server is down, checking the 2022 level archive…"
+                    archiveCourse(code) ?: throw notSavedError(e)
+                }
+            val archiveJson = fromArchive?.let(::archiveInfoJson)
+            if (saveLevels && archiveJson != null && cache.infoJson(code) == null) cache.saveInfo(code, archiveJson)
             val info = levelInfo?.takeIf { it.code == code }
-                ?: runCatching { MariOverApi.fetchLevelInfo(code) }.getOrNull()
+                ?: archiveJson?.let { MariOverApi.parseLevelInfo(code, it) }
+                ?: cache.infoJson(code)?.let { MariOverApi.parseLevelInfo(code, it) }
+                ?: runCatching {
+                    MariOverApi.fetchLevelInfoJson(code).also { json ->
+                        if (saveLevels) cache.saveInfo(code, json)
+                    }.let { MariOverApi.parseLevelInfo(code, it) }
+                }.getOrNull()
+            if (saveLevels) {
+                if (cache.data(code) == null) cache.saveData(code, data)
+                if (fromArchive == null && cache.thumbnail(code) == null) {
+                    MariOverApi.fetchThumbnail(code)?.let { cache.saveThumbnail(code, it) }
+                }
+                savedLevels = cache.list()
+            }
 
             busyMessage = "Writing to slot $slot…"
             val tree = SafTree(resolver, uri!!)
