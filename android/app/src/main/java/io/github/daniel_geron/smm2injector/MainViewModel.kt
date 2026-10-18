@@ -73,6 +73,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     var saveLevels by mutableStateOf(store.saveLevels)
         private set
+
+    /** Shown once, on the first launch. */
+    var showWelcome by mutableStateOf(!store.welcomeShown)
+        private set
+
+    fun dismissWelcome() {
+        showWelcome = false
+        store.welcomeShown = true
+    }
     var savedLevels by mutableStateOf(cache.list())
         private set
 

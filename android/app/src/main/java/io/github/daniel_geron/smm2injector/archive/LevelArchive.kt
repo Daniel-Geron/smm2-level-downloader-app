@@ -77,8 +77,17 @@ class LevelArchive private constructor(private val context: Context) {
     val volumes: List<File>
         get() = context.getExternalFilesDirs(null).filterNotNull()
 
+    /**
+     * Where the archive lives. If the saved choice is missing (or that storage is gone), it picks the
+     * storage that already has archive data, so existing downloads are found again.
+     */
     var root: File
-        get() = prefs.getString("root", null)?.let(::File) ?: volumes.first()
+        get() {
+            prefs.getString("root", null)?.let(::File)?.takeIf { it.exists() }?.let { return it }
+            val vols = volumes
+            return vols.firstOrNull { File(it, "archive/index.db").exists() || hasFiles(File(it, "archive/files")) }
+                ?: vols.first()
+        }
         set(value) {
             close()
             prefs.edit { putString("root", value.absolutePath) }
@@ -140,6 +149,7 @@ class LevelArchive private constructor(private val context: Context) {
                 }
             }
         }
+        syncDownloaded(db)
         return db.rawQuery("SELECT idx, path, size, indexed_groups, total_groups, downloaded FROM shards ORDER BY idx", null).use { c ->
             buildList {
                 while (c.moveToNext()) {
@@ -148,6 +158,32 @@ class LevelArchive private constructor(private val context: Context) {
             }
         }
     }
+
+    /**
+     * Marks files as downloaded from what's actually on the storage (complete files only), so files
+     * that are already there are used even if the database doesn't know about them, e.g. after the
+     * index was rebuilt.
+     */
+    private fun syncDownloaded(db: SQLiteDatabase) {
+        val changes = db.rawQuery("SELECT idx, path, size, downloaded FROM shards", null).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    val file = File(shardDir, c.getString(1).substringAfterLast('/'))
+                    val complete = file.length() == c.getLong(2)
+                    if (complete != (c.getInt(3) == 1)) add(c.getInt(0) to complete)
+                }
+            }
+        }
+        if (changes.isEmpty()) return
+        db.inTransaction {
+            changes.forEach { (idx, complete) ->
+                db.execSQL("UPDATE shards SET downloaded = ? WHERE idx = ?", arrayOf(if (complete) 1 else 0, idx))
+            }
+        }
+        synchronized(this) { changes.forEach { (idx, _) -> openFiles.remove(idx)?.close() } }
+    }
+
+    private fun hasFiles(dir: File) = dir.listFiles()?.any { it.name.endsWith(".parquet") } == true
 
     fun totalSize(): Long = database().count("SELECT COALESCE(SUM(size), 0) FROM shards")
 

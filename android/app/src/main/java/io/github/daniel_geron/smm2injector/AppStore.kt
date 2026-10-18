@@ -45,6 +45,11 @@ class AppStore(private val context: Context) {
         get() = prefs.getBoolean("save_levels", false)
         set(value) = prefs.edit { putBoolean("save_levels", value) }
 
+    /** Whether the first-launch welcome popup has been dismissed. */
+    var welcomeShown: Boolean
+        get() = prefs.getBoolean("welcome_shown", false)
+        set(value) = prefs.edit { putBoolean("welcome_shown", value) }
+
     // ---------------------------------------------------------------- history
 
     fun loadHistory(): Map<Int, HistoryEntry> {

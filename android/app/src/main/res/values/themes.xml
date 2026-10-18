@@ -1,3 +1,6 @@
 <resources>
-    <style name="Theme.SMM2Injector" parent="android:Theme.Material.NoActionBar" />
+    <style name="Theme.SMM2Injector" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Matches the app's yellow frame so there's no dark flash on launch. -->
+        <item name="android:windowBackground">@color/smm_yellow</item>
+    </style>
 </resources>

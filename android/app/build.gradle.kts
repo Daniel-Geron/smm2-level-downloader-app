@@ -12,8 +12,8 @@ android {
         applicationId = "io.github.daniel_geron.smm2injector"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
 
         // Release builds always use the public MariOver server. Debug builds can be pointed at a
         // test server with -PapiBaseUrl=http://10.0.2.2:8000/mm2
