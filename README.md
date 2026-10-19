@@ -7,12 +7,12 @@ An app, styled after Super Mario Maker 2's menus, that downloads any Super Mario
 
 You can also browse an archive of 26.6 million levels (everything uploaded up to February 2022) with search and filters, and inject them without a code or the level server.
 
-**[Download the Android app (APK)](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/v1.2)** · **[Download the PC app](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/pc-v1.0.0)**
+**[Download the latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest)** (the Android APK and the PC app are both in it)
 
 ![Android App](<GUI Images/Android App.png>)
 
 # Setup
-1) Download `smm2_level_downloader_injector_1.2.apk` from the [Android release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/v1.2) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
+1) Download `smm2_level_downloader_injector_1.2.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
 2) In Eden, start Super Mario Maker 2 once so the game creates its save, then close Eden completely (swipe it away from recent apps)
 3) Open **SMM2 Level Injector** and tap **Select Eden folder**. The file picker opens on Eden's files; tap **Use this folder**, then **Allow**. If it doesn't open there, tap the ☰ menu in the picker and choose **Eden**
 4) The app finds your Super Mario Maker 2 save automatically
@@ -72,7 +72,7 @@ It then writes the downloaded level as `course_data_XXX.bcd` into that folder. I
 
 The PC app works like the Android app (same tabs: Download, Archive, Saved and Backups), but you choose which emulator to use: **Eden** or **Ryujinx**.
 
-1) Download one of these from the [PC release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/pc-v1.0.0):
+1) Download one of these from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest):
     * `SMM2-Level-Downloader-1.0.0.msi`: installer, adds a Start menu shortcut (no admin rights needed)
     * `SMM2-Level-Downloader-1.0.0-portable.zip`: extract it anywhere and run `SMM2 Level Downloader.exe`
 
