@@ -3,7 +3,7 @@
 
 An app, styled after Super Mario Maker 2's menus, that downloads any Super Mario Maker 2 level by its course code and puts it into your Coursebot. Levels placed in "My Courses" can be opened in the editor.
 * **Android:** for the [Eden](https://eden-emu.dev) Switch emulator. Everything happens on your phone; no PC is needed
-* **PC (Windows):** for Eden or [Ryujinx](https://ryujinx.app), with the same menus and features. See [PC app](#pc-app-windows)
+* **PC (Windows):** for Eden or Ryujinx, with the same menus and features. See [PC app](#pc-app-windows)
 
 You can also browse an archive of 26.6 million levels (everything uploaded up to February 2022) with search and filters, and inject them without a code or the level server.
 
