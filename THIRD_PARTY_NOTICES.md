@@ -1,6 +1,6 @@
 # Third-party notices
 
-The Android app's course-file encryption (`android/app/src/main/java/io/github/daniel_geron/smm2injector/archive/CourseCrypto.kt`) uses the file format and key table from [MariOver](https://github.com/TheGreatRambler/MariOver)'s `SMM2/encryption.py`, which is under the MIT License:
+The course-file encryption used by the Android and PC apps (`android/app/src/main/java/io/github/daniel_geron/smm2injector/archive/CourseCrypto.kt`) uses the file format and key table from [MariOver](https://github.com/TheGreatRambler/MariOver)'s `SMM2/encryption.py`, which is under the MIT License:
 
 ```
 MIT License
@@ -30,7 +30,7 @@ Level data in the app's level archive comes from TheGreatRambler's [mm2_level da
 
 ## Nunito font
 
-The Android app bundles the [Nunito](https://github.com/googlefonts/nunito) font (`android/app/src/main/res/font/nunito.ttf`), which is under the SIL Open Font License 1.1:
+The Android app bundles the [Nunito](https://github.com/googlefonts/nunito) font (`android/app/src/main/res/font/nunito.ttf`), and the PC app bundles fixed-weight instances made from it (`desktop/src/main/resources/fonts/`). Nunito is under the SIL Open Font License 1.1:
 
 ```
 Copyright 2014 The Nunito Project Authors (https://github.com/googlefonts/nunito)
@@ -127,3 +127,14 @@ DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.
 ```
+
+## PC app libraries
+
+The PC app (`desktop/`) is distributed with these libraries, each under its own license:
+
+* [Kotlin](https://kotlinlang.org) standard library, [kotlinx.coroutines](https://github.com/Kotlin/kotlinx.coroutines) and [Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform) (including Skiko and the Material 3 and Material Icons libraries): Apache License 2.0
+* [SQLite JDBC](https://github.com/xerial/sqlite-jdbc): Apache License 2.0. It includes [SQLite](https://sqlite.org), which is in the public domain
+* [JSON-java](https://github.com/stleary/JSON-java) (org.json): public domain
+* Release builds bundle a Java runtime from [Eclipse Temurin](https://adoptium.net) (OpenJDK), under the GNU General Public License v2 with the Classpath Exception. Its license files are in the `runtime/legal` folder of the installed app
+
+The Apache License 2.0 is available at https://www.apache.org/licenses/LICENSE-2.0.

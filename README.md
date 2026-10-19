@@ -1,16 +1,18 @@
-## DISCLAIMER: Downloading levels by code depends on the [MariOver](https://github.com/TheGreatRambler/MariOver) server. If the server is down or having issues, you can only use levels saved on your device and levels from the [level archive](#level-archive) (uploaded up to February 2022).
-# SMM2 Level Injector for Eden (Android)
+## DISCLAIMER: Downloading levels by code depends on the [MariOver](https://github.com/TheGreatRambler/MariOver) server. If the server is down or having issues, you can only use levels saved on your device/PC and levels from the [level archive](#level-archive) (uploaded up to February 2022).
+# SMM2 Level Injector for Eden and Ryujinx (Android and PC)
 
-An Android app, styled after Super Mario Maker 2's menus, that downloads any Super Mario Maker 2 level by its course code and puts it into your Coursebot in the [Eden](https://eden-emu.dev) Switch emulator. Levels placed in "My Courses" can be opened in the editor. Everything happens on your phone; no PC is needed.
+An app, styled after Super Mario Maker 2's menus, that downloads any Super Mario Maker 2 level by its course code and puts it into your Coursebot. Levels placed in "My Courses" can be opened in the editor.
+* **Android:** for the [Eden](https://eden-emu.dev) Switch emulator. Everything happens on your phone; no PC is needed
+* **PC (Windows):** for Eden or [Ryujinx](https://ryujinx.app), with the same menus and features. See [PC app](#pc-app-windows)
 
 You can also browse an archive of 26.6 million levels (everything uploaded up to February 2022) with search and filters, and inject them without a code or the level server.
 
-**[Download the latest APK](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest)**
+**[Download the Android app (APK)](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/v1.2)** · **[Download the PC app](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/pc-v1.0.0)**
 
 ![Android App](<GUI Images/Android App.png>)
 
 # Setup
-1) Download `smm2_level_downloader_injector_1.2.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
+1) Download `smm2_level_downloader_injector_1.2.apk` from the [Android release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/v1.2) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
 2) In Eden, start Super Mario Maker 2 once so the game creates its save, then close Eden completely (swipe it away from recent apps)
 3) Open **SMM2 Level Injector** and tap **Select Eden folder**. The file picker opens on Eden's files; tap **Use this folder**, then **Allow**. If it doesn't open there, tap the ☰ menu in the picker and choose **Eden**
 4) The app finds your Super Mario Maker 2 save automatically
@@ -65,6 +67,25 @@ Android doesn't let apps read other apps' private folders directly, but Eden exp
 
 It then writes the downloaded level as `course_data_XXX.bcd` into that folder. If you moved Eden's save data to a custom folder, select that folder in the picker instead.
 
+# PC app (Windows)
+![PC App](<GUI Images/PC App.png>)
+
+The PC app works like the Android app (same tabs: Download, Archive, Saved and Backups), but you choose which emulator to use: **Eden** or **Ryujinx**.
+
+1) Download one of these from the [PC release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/tag/pc-v1.0.0):
+    * `SMM2-Level-Downloader-1.0.0.msi`: installer, adds a Start menu shortcut (no admin rights needed)
+    * `SMM2-Level-Downloader-1.0.0-portable.zip`: extract it anywhere and run `SMM2 Level Downloader.exe`
+
+    Windows may show a SmartScreen warning because the app isn't signed; click **More info** → **Run anyway**
+2) Start Super Mario Maker 2 in your emulator once so the game creates its save, then close the emulator
+3) Open **SMM2 Level Downloader** and choose **Eden** or **Ryujinx**. The save is found automatically in the emulator's usual folder (`%APPDATA%\eden` or `%APPDATA%\Ryujinx`). For a portable install or a custom data folder, click **Choose folder…** and select the emulator's data folder (the one with `nand` in it for Eden, or `bis` for Ryujinx), or the save folder itself
+4) **Recommended:** install the [pre-loaded save](#empty-slots--pre-loaded-save)
+5) Inject levels as described [above](#injecting-a-level). **Close the emulator first**; the app warns you if it's still running
+
+The app keeps its settings, backups and saved levels in `%APPDATA%\SMM2 Level Downloader`. The level archive goes there too by default; in the **Archive** tab, open **Manage** and click **Change folder…** to put it on another drive.
+
+For Ryujinx, the app writes to the save's `0` folder and also updates Ryujinx's working copy in the `1` folder, so both stay the same.
+
 # Building the APK
 Requires JDK 17+ and the Android SDK (or just open `android/` in Android Studio).
 ```
@@ -73,8 +94,18 @@ cd android
 ```
 The APK is written to `android/app/build/outputs/apk/release/app-release.apk`.
 
+# Building the PC app
+Requires JDK 17+. The PC app ([Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/)) is in `desktop/` and shares the archive and course-file code with the Android app.
+```
+cd desktop
+./gradlew run                    (run it)
+./gradlew packageReleaseMsi      (Windows installer)
+./gradlew createReleaseDistributable   (portable folder)
+```
+Release builds bundle a Java runtime, taken from the JDK Gradle runs on, or from `-PpackagingJdk=<path>`. The app also runs from source on Linux and macOS (Eden's and Ryujinx's default folders there are detected too), but only Windows builds are tested and released.
+
 # PC scripts (original tool)
-The original Python scripts from [royaltongue's repository](https://github.com/royaltongue/smm2-level-downloader-injector) are still included, for PC emulators (Ryujinx, Eden for PC) or a homebrewed Switch. `smm2-level-downloader-gui.py` is a GUI version with level info and thumbnails; `smm2-level-downloader-injector.py` is the command-line version.
+The original Python scripts from [royaltongue's repository](https://github.com/royaltongue/smm2-level-downloader-injector) are still included. On PC the [PC app](#pc-app-windows) is easier to use; the scripts are still useful for a homebrewed Switch. `smm2-level-downloader-gui.py` is a GUI version with level info and thumbnails; `smm2-level-downloader-injector.py` is the command-line version.
 
 0) **MAKE SURE YOUR EMULATOR IS CLOSED BEFORE INJECTING FILES**
 1) Download and extract or clone this repository
@@ -101,4 +132,5 @@ To use the pre-loaded save on PC, copy the files from `Pre-loaded Save/Emulator`
 * [TheGreatRambler](https://github.com/TheGreatRambler) - The [MariOver API](https://github.com/TheGreatRambler/MariOver), which makes all of this possible, and the [mm2_level dataset](https://huggingface.co/datasets/TheGreatRambler/mm2_level) (CC BY-NC-SA 4.0) behind the level archive. The course-file encryption is based on MariOver's (MIT License, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md))
 * [Kinnay](https://github.com/kinnay) - [NintendoClients wiki](https://github.com/kinnay/NintendoClients/wiki/Data-Store-Codes#super-mario-maker-2), for converting between course codes and the archive's data IDs
 * [Nunito](https://github.com/googlefonts/nunito) - The app's rounded font (SIL Open Font License)
+* The PC app is built with [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/) and uses [SQLite JDBC](https://github.com/xerial/sqlite-jdbc) and [JSON-java](https://github.com/stleary/JSON-java); releases bundle an [Eclipse Temurin](https://adoptium.net) Java runtime. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
 * [DarkFlare](https://www.youtube.com/@DarkFlare) - The Ryujinx cheat that removes background music, from the description of [this video](https://www.youtube.com/watch?v=vQd758VzOug)
