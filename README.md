@@ -127,6 +127,13 @@ To use the pre-loaded save on PC, copy the files from `Pre-loaded Save/Emulator`
 
 **Ryujinx bonus:** to remove the background music while keeping sound effects, right click Mario Maker 2 → "Open Mods Directory", copy the `cheats` folder there, then right click → "Manage Cheats" and enable the cheat.
 
+# Legal
+This is an unofficial fan project, made for fun and not for profit. It is not affiliated with, endorsed by, or connected to Nintendo, or to any of the projects it relies on: the MariOver API, the mm2_level dataset, Hugging Face, Eden or Ryujinx. Super Mario Maker 2 and Nintendo Switch are trademarks of Nintendo.
+
+The app is basically a frontend for other people's tools and data. Levels come from the MariOver API and the mm2_level dataset, and are written into a save that you already have. It does not include or download the game, firmware, keys or any other copyrighted Nintendo files; you need your own copy of Super Mario Maker 2. The levels themselves belong to the players who made them.
+
+If you are a rights holder and want something here taken down, open an issue or contact me on GitHub and I will remove it, or the whole project if needed.
+
 # Credits
 * [royaltongue](https://github.com/royaltongue) - The original downloader/injector and the pre-loaded save. This repository is a fork of [royaltongue/smm2-level-downloader-injector](https://github.com/royaltongue/smm2-level-downloader-injector)
 * [TheGreatRambler](https://github.com/TheGreatRambler) - The [MariOver API](https://github.com/TheGreatRambler/MariOver), which makes all of this possible, and the [mm2_level dataset](https://huggingface.co/datasets/TheGreatRambler/mm2_level) (CC BY-NC-SA 4.0) behind the level archive. The course-file encryption is based on MariOver's (MIT License, see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md))
