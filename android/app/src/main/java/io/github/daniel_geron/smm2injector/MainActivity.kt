@@ -708,8 +708,8 @@ private fun Dialogs(state: DialogState, vm: MainViewModel) {
 
         DialogState.ConfirmPreloaded -> ConfirmDialog(
             title = "Replace your SMM2 save?",
-            text = "This downloads about 135 MB and replaces your Super Mario Maker 2 save (courses, " +
-                "progress and settings) with the pre-loaded one. Your current save is backed up " +
+            text = "This downloads about 135 MB and replaces your Super Mario Maker 2 save (courses and " +
+                "settings) with the pre-loaded one. Your Story Mode progress is kept. Your current save is backed up " +
                 "first and can be restored from the Backups tab.\n\nMake sure Eden is closed.",
             confirm = "Replace save",
             onConfirm = vm::installPreloadedSave,

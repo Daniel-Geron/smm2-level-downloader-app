@@ -12,7 +12,7 @@ You can also browse an archive of 26.6 million levels (everything uploaded up to
 ![Android App](<GUI Images/Android App.png>)
 
 # Setup
-1) Download `smm2_level_downloader_injector_1.2.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
+1) Download `smm2_level_downloader_injector_1.3.apk` from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest) on your phone and install it (you may need to allow installing apps from unknown sources), or [build it yourself](#building-the-apk)
 2) In Eden, start Super Mario Maker 2 once so the game creates its save, then close Eden completely (swipe it away from recent apps)
 3) Open **SMM2 Level Injector** and tap **Select Eden folder**. The file picker opens on Eden's files; tap **Use this folder**, then **Allow**. If it doesn't open there, tap the ☰ menu in the picker and choose **Eden**
 4) The app finds your Super Mario Maker 2 save automatically
@@ -47,7 +47,7 @@ The archive has no thumbnails or maker names. The level server isn't involved at
 # Empty slots / pre-loaded save
 Super Mario Maker 2 ignores injected levels in slots that are empty in your save, so you can only replace slots that already have a course in them. The app warns you if you pick an empty slot.
 
-**Using the pre-loaded save is recommended.** To make every slot usable, tap **Install pre-loaded save** (in the **Download** tab, or the **Backups** tab). It downloads a save from this repository (~135 MB) that has all 120 "My Courses" and 60 "Downloaded Courses" slots filled, and installs it into Eden. This replaces your SMM2 save (courses, progress and settings); your existing save is backed up first and can be restored from the **Backups** tab.
+**Using the pre-loaded save is recommended.** To make every slot usable, tap **Install pre-loaded save** (in the **Download** tab, or the **Backups** tab). It downloads a save from this repository (~135 MB) that has all 120 "My Courses" and 60 "Downloaded Courses" slots filled, and installs it into Eden. This replaces your SMM2 save (courses and settings) but keeps your Story Mode progress (`quest.dat`); your existing save is backed up first and can be restored from the **Backups** tab.
 
 # Known limitations
 Only the **level data** is replaced, not the **level metadata**. As a result:
@@ -73,8 +73,8 @@ It then writes the downloaded level as `course_data_XXX.bcd` into that folder. I
 The PC app works like the Android app (same tabs: Download, Archive, Saved and Backups), but you choose which emulator to use: **Eden** or **Ryujinx**.
 
 1) Download one of these from the [latest release](https://github.com/Daniel-Geron/smm2-level-downloader-app/releases/latest):
-    * `SMM2-Level-Downloader-1.0.0.msi`: installer, adds a Start menu shortcut (no admin rights needed)
-    * `SMM2-Level-Downloader-1.0.0-portable.zip`: extract it anywhere and run `SMM2 Level Downloader.exe`
+    * `SMM2-Level-Downloader-1.0.1.msi`: installer, adds a Start menu shortcut (no admin rights needed)
+    * `SMM2-Level-Downloader-1.0.1-portable.zip`: extract it anywhere and run `SMM2 Level Downloader.exe`
 
     Windows may show a SmartScreen warning because the app isn't signed; click **More info** → **Run anyway**
 2) Start Super Mario Maker 2 in your emulator once so the game creates its save, then close the emulator
@@ -123,7 +123,7 @@ The original Python scripts from [royaltongue's repository](https://github.com/r
 4) Enter the level code (`ABCDEFGHI`, not case-sensitive) and the slot to replace (0-179)
 5) Open your emulator, or inject the save using Checkpoint, and the level is in Coursebot
 
-To use the pre-loaded save on PC, copy the files from `Pre-loaded Save/Emulator` into your save folder.
+To use the pre-loaded save on PC, copy the files from `Pre-loaded Save/Emulator` into your save folder. Skip `quest.dat` to keep your Story Mode progress (the game creates it if it's missing).
 
 **Ryujinx bonus:** to remove the background music while keeping sound effects, right click Mario Maker 2 → "Open Mods Directory", copy the `cheats` folder there, then right click → "Manage Cheats" and enable the cheat.
 

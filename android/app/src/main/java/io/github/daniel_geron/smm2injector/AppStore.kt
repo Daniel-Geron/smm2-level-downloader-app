@@ -133,7 +133,9 @@ class AppStore(private val context: Context) {
             for (i in 0 until TOTAL_SLOTS) add(courseDataName(i))
             for (i in 0 until TOTAL_SLOTS) add("course_thumb_%03d.btl".format(i))
             for (i in 0 until MY_COURSES_SLOTS) add("course_replay_%03d.dat".format(i))
-            addAll(listOf("save.dat", "later.dat", "myworld.dat", "network.dat", "quest.dat"))
+            // quest.dat (Story Mode progress) is left out so the player's own progress is kept; the
+            // game creates it if it's missing. It stays in the repo for older app versions.
+            addAll(listOf("save.dat", "later.dat", "myworld.dat", "network.dat"))
         }
     }
 }
